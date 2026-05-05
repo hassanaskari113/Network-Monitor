@@ -1,4 +1,4 @@
-// script.js — NetWatch Frontend
+// script.js — PacketSweep Frontend
 
 // ── STATE ─────────────────────────────────────
 let activeFilters  = { protocol: "ALL", src_ip: "", dst_ip: "" };
@@ -14,11 +14,44 @@ function esc(str) {
         .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+// ── INPUT VALIDATION ──────────────────────────
+// Checks if the user input contains only valid IP characters (numbers, dots, colons, hex)
+function isValidIPFilter(ip) {
+    if (ip === "") return true;
+    const validIPChars = /^[a-fA-F0-9.:]+$/;
+    return validIPChars.test(ip);
+}
+
+// ── EMPTY STATE MANAGER ───────────────────────
+// Smart function to display the correct message based on context
+function updateEmptyState() {
+    const tbody = document.getElementById("packetTableBody");
+    const visibleRows = tbody.querySelectorAll("tr:not(.empty-row)");
+    
+    if (visibleRows.length === 0) {
+        let message = "Press Start to begin monitoring";
+        let icon = "[ ]";
+        
+        // If we have packets but none are visible, it means the filter hid them all
+        if (allPackets.length > 0) {
+            message = "No packets match your current filters.";
+            icon = "⧗"; 
+        }
+        
+        tbody.innerHTML = `
+          <tr class="empty-row"><td colspan="10">
+            <div class="empty-state">
+              <div class="empty-icon">${icon}</div>
+              <div>${message}</div>
+            </div>
+          </td></tr>`;
+    } else {
+        const empty = tbody.querySelector(".empty-row");
+        if (empty) empty.remove();
+    }
+}
+
 // ── UPDATE ALL COUNTERS & STATS ───────────────
-// Single function that updates CAPTURED, DISPLAYED, BYTES, and all stats.
-// Called after every change to allPackets or activeFilters.
-// CAPTURED = total packets in cache (all protocols, no filter)
-// DISPLAYED = packets matching current filter
 function updateUI(totalCaptured) {
     const filtered = filterLocally(allPackets);
     const stats    = calcStats(filtered);
@@ -37,7 +70,8 @@ function updateUI(totalCaptured) {
 function startMonitoring() {
     lastSeenId = 0;
     allPackets = [];
-    clearTable();
+    document.getElementById("packetTableBody").innerHTML = "";
+    updateEmptyState();
 
     document.getElementById("hCaptured").textContent   = 0;
     document.getElementById("hDisplayed").textContent  = 0;
@@ -92,9 +126,9 @@ function fetchPackets() {
 
                 const toShow = filterLocally(data.packets);
                 if (toShow.length > 0) appendRows(toShow);
+                
+                updateEmptyState();
             }
-            // Pass server's total_captured for CAPTURED counter
-            // (server may have more than browser received so far)
             updateUI(data.total_captured);
         });
 }
@@ -163,12 +197,27 @@ function filterLocally(pList) {
 
 // ── APPLY FILTER ──────────────────────────────
 function applyFilter() {
+    const src = document.getElementById("filterSrcIP").value.trim();
+    const dst = document.getElementById("filterDstIP").value.trim();
+
+    // Prevent completely invalid strings from being used as filters
+    if (!isValidIPFilter(src) || !isValidIPFilter(dst)) {
+        alert("Invalid IP format. Please use numbers, dots, or colons (e.g., 192.168.1.5 or 8.8.8.8).");
+        return;
+    }
+
     activeFilters.protocol = document.getElementById("filterProtocol").value;
-    activeFilters.src_ip   = document.getElementById("filterSrcIP").value.trim();
-    activeFilters.dst_ip   = document.getElementById("filterDstIP").value.trim();
+    activeFilters.src_ip   = src;
+    activeFilters.dst_ip   = dst;
+    
     const filtered = filterLocally(allPackets);
-    clearTable();
-    if (filtered.length > 0) appendRows(filtered.slice(-MAX_ROWS));
+    document.getElementById("packetTableBody").innerHTML = ""; // Clear existing rows
+    
+    if (filtered.length > 0) {
+        appendRows(filtered.slice(-MAX_ROWS));
+    }
+    
+    updateEmptyState();
     updateUI();
 }
 
@@ -178,8 +227,14 @@ function resetFilter() {
     document.getElementById("filterSrcIP").value    = "";
     document.getElementById("filterDstIP").value    = "";
     activeFilters = { protocol: "ALL", src_ip: "", dst_ip: "" };
-    clearTable();
-    if (allPackets.length > 0) appendRows(allPackets.slice(-MAX_ROWS));
+    
+    document.getElementById("packetTableBody").innerHTML = ""; // Clear existing rows
+    
+    if (allPackets.length > 0) {
+        appendRows(allPackets.slice(-MAX_ROWS));
+    }
+    
+    updateEmptyState();
     updateUI();
 }
 
@@ -215,17 +270,6 @@ function appendRows(newPackets) {
     if (allRows.length > MAX_ROWS) {
         for (let i = MAX_ROWS; i < allRows.length; i++) allRows[i].remove();
     }
-}
-
-// ── CLEAR TABLE ───────────────────────────────
-function clearTable() {
-    document.getElementById("packetTableBody").innerHTML = `
-      <tr class="empty-row"><td colspan="10">
-        <div class="empty-state">
-          <div class="empty-icon">[ ]</div>
-          <span>Press START to begin monitoring</span>
-        </div>
-      </td></tr>`;
 }
 
 // ── EXPORT CSV ────────────────────────────────
@@ -289,6 +333,7 @@ function loadCapture(filename) {
             allPackets    = data.packets;
             lastSeenId    = 0;
             activeFilters = { protocol: "ALL", src_ip: "", dst_ip: "" };
+            
             document.getElementById("filterProtocol").value = "ALL";
             document.getElementById("filterSrcIP").value    = "";
             document.getElementById("filterDstIP").value    = "";
@@ -296,9 +341,10 @@ function loadCapture(filename) {
             document.getElementById("statusDot").classList.remove("active");
             document.getElementById("btnStart").disabled = false;
             document.getElementById("btnStop").disabled  = true;
-            clearTable();
+            
+            document.getElementById("packetTableBody").innerHTML = "";
             appendRows(data.packets.slice(-MAX_ROWS));
-            // updateUI with no argument → uses allPackets.length for both counters
+            updateEmptyState();
             updateUI();
         });
 }

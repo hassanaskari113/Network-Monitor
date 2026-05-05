@@ -2,28 +2,28 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #111318;
-  --surface:   #1a1d24;
-  --surface2:  #1f2330;
-  --border:    #2a2f3d;
-  --border2:   #353b4d;
-  --text:      #e2e6f0;
-  --text2:     #8892a4;
-  --text3:     #4a5568;
-  --accent:    #3b82f6;
-  --accent-lt: #1e2d4a;
-  --green:     #22c55e;
-  --green-lt:  #162a1f;
-  --red:       #ef4444;
-  --red-lt:    #2a1a1a;
-  --orange:    #f59e0b;
-  --tcp:       #3b82f6;
-  --udp:       #22c55e;
-  --icmp:      #f59e0b;
+  --bg:        #f8fafc;
+  --surface:   #ffffff;
+  --surface2:  #f1f5f9;
+  --border:    #e2e8f0;
+  --border2:   #cbd5e1;
+  --text:      #0f172a;
+  --text2:     #334155;
+  --text3:     #64748b;
+  --accent:    #2563eb;
+  --accent-lt: #dbeafe;
+  --green:     #16a34a;
+  --green-lt:  #dcfce7;
+  --red:       #dc2626;
+  --red-lt:    #fee2e2;
+  --orange:    #ea580c;
+  --tcp:       #2563eb;
+  --udp:       #16a34a;
+  --icmp:      #ea580c;
   --font:      'IBM Plex Sans', sans-serif;
   --mono:      'IBM Plex Mono', monospace;
   --radius:    6px;
-  --shadow:    0 1px 3px rgba(0,0,0,0.4);
+  --shadow:    0 1px 3px rgba(0,0,0,0.1);
 }
 
 html, body {
