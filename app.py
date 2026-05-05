@@ -6,8 +6,6 @@ from collections import deque
 app = Flask(__name__)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
-# Set to True for live sniffing (needs Scapy + Npcap + run as Admin)
-# Set to False for simulated mode using dataset.csv
 SNIFF_MODE = True
 
 if SNIFF_MODE:
@@ -129,8 +127,6 @@ def stop_monitoring():
 @app.route("/packets")
 def get_packets():
     global displayed_index
-    # Note: filtering is done client-side in script.js
-    # Server only needs to return new packets since last request
     since_id = int(request.args.get("since_id", 0))
 
     if SNIFF_MODE:
@@ -165,7 +161,6 @@ def get_logs():
 
 @app.route("/save", methods=["POST"])
 def save_packets():
-    # Receive packets from browser cache — ensures count matches what user sees
     data = request.get_json(silent=True)
     if data and "packets" in data:
         to_save = data["packets"]

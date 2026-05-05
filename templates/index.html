@@ -9,7 +9,6 @@
 </head>
 <body>
 
-  <!-- TOP NAVIGATION -->
   <nav class="navbar">
     <div class="nav-brand">
       <div class="logo-mark">PS</div>
@@ -38,13 +37,10 @@
     </div>
   </nav>
 
-  <!-- MAIN WORKSPACE -->
   <main class="workspace">
     
-    <!-- METRICS GRID -->
     <section class="metrics-grid">
       
-      <!-- Traffic Summary Card -->
       <div class="metric-card">
         <h3 class="card-title">Traffic Summary</h3>
         <div class="stat-row">
@@ -61,7 +57,6 @@
         </div>
       </div>
 
-      <!-- Protocols Card -->
       <div class="metric-card">
         <h3 class="card-title">Protocol Distribution</h3>
         <div class="proto-bars">
@@ -83,7 +78,6 @@
         </div>
       </div>
 
-      <!-- Top Talkers Card -->
       <div class="metric-card">
         <h3 class="card-title">Network Activity</h3>
         <div class="stat-row">
@@ -100,7 +94,6 @@
         </div>
       </div>
 
-      <!-- Capture Manager Card -->
       <div class="metric-card capture-card">
         <div class="card-header-flex">
           <h3 class="card-title">Saved Captures</h3>
@@ -110,14 +103,12 @@
           </div>
         </div>
         <div class="saves-container" id="savesList">
-          <!-- Populated by JS -->
           <div class="saves-empty">No saves found.</div>
         </div>
       </div>
 
     </section>
 
-    <!-- HORIZONTAL FILTER BAR -->
     <section class="filter-bar">
       <div class="filter-group">
         <label>Protocol</label>
@@ -142,7 +133,6 @@
       </div>
     </section>
 
-    <!-- DATA TABLE -->
     <section class="table-container">
       <div class="table-header">
         <h2>Packet Stream</h2>
@@ -165,7 +155,6 @@
             </tr>
           </thead>
           <tbody id="packetTableBody">
-            <!-- Handled by JS Empty State Manager -->
           </tbody>
         </table>
       </div>

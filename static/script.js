@@ -1,29 +1,22 @@
-// script.js — PacketSweep Frontend
-
-// ── STATE ─────────────────────────────────────
 let activeFilters  = { protocol: "ALL", src_ip: "", dst_ip: "" };
 let packetInterval = null;
 let lastSeenId     = 0;
 let allPackets     = [];
 const MAX_ROWS     = 500;
 
-// ── XSS PROTECTION ────────────────────────────
+
 function esc(str) {
     return String(str)
         .replace(/&/g, "&amp;").replace(/</g, "&lt;")
         .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// ── INPUT VALIDATION ──────────────────────────
-// Checks if the user input contains only valid IP characters (numbers, dots, colons, hex)
 function isValidIPFilter(ip) {
     if (ip === "") return true;
     const validIPChars = /^[a-fA-F0-9.:]+$/;
     return validIPChars.test(ip);
 }
 
-// ── EMPTY STATE MANAGER ───────────────────────
-// Smart function to display the correct message based on context
 function updateEmptyState() {
     const tbody = document.getElementById("packetTableBody");
     const visibleRows = tbody.querySelectorAll("tr:not(.empty-row)");
@@ -32,7 +25,6 @@ function updateEmptyState() {
         let message = "Press Start to begin monitoring";
         let icon = "[ ]";
         
-        // If we have packets but none are visible, it means the filter hid them all
         if (allPackets.length > 0) {
             message = "No packets match your current filters.";
             icon = "⧗"; 
@@ -51,7 +43,6 @@ function updateEmptyState() {
     }
 }
 
-// ── UPDATE ALL COUNTERS & STATS ───────────────
 function updateUI(totalCaptured) {
     const filtered = filterLocally(allPackets);
     const stats    = calcStats(filtered);
@@ -66,7 +57,6 @@ function updateUI(totalCaptured) {
     renderStats(stats);
 }
 
-// ── START ─────────────────────────────────────
 function startMonitoring() {
     lastSeenId = 0;
     allPackets = [];
@@ -92,7 +82,6 @@ function startMonitoring() {
         });
 }
 
-// ── STOP ──────────────────────────────────────
 function stopMonitoring() {
     fetch("/stop", { method: "POST" })
         .then(r => r.json())
@@ -107,7 +96,6 @@ function stopMonitoring() {
         });
 }
 
-// ── FETCH PACKETS ─────────────────────────────
 function fetchPackets() {
     const params = new URLSearchParams({
         protocol: "ALL",
@@ -133,7 +121,6 @@ function fetchPackets() {
         });
 }
 
-// ── RENDER STATS ──────────────────────────────
 function renderStats(s) {
     document.getElementById("statTotal").textContent   = s.total;
     document.getElementById("statTCP").textContent     = s.tcp;
@@ -158,7 +145,6 @@ function renderStats(s) {
     }
 }
 
-// ── CALC STATS ────────────────────────────────
 function calcStats(pList) {
     if (!pList || pList.length === 0) {
         return { total:0, tcp:0, udp:0, icmp:0, avg_size:0,
@@ -182,7 +168,6 @@ function calcStats(pList) {
              top_src_ip: top(sc), top_dst_ip: top(dc), top_service: top(sv) };
 }
 
-// ── FILTER LOCALLY ────────────────────────────
 function filterLocally(pList) {
     return pList.filter(p => {
         const protoOk = activeFilters.protocol === "ALL" ||
@@ -195,12 +180,10 @@ function filterLocally(pList) {
     });
 }
 
-// ── APPLY FILTER ──────────────────────────────
 function applyFilter() {
     const src = document.getElementById("filterSrcIP").value.trim();
     const dst = document.getElementById("filterDstIP").value.trim();
 
-    // Prevent completely invalid strings from being used as filters
     if (!isValidIPFilter(src) || !isValidIPFilter(dst)) {
         alert("Invalid IP format. Please use numbers, dots, or colons (e.g., 192.168.1.5 or 8.8.8.8).");
         return;
@@ -211,7 +194,7 @@ function applyFilter() {
     activeFilters.dst_ip   = dst;
     
     const filtered = filterLocally(allPackets);
-    document.getElementById("packetTableBody").innerHTML = ""; // Clear existing rows
+    document.getElementById("packetTableBody").innerHTML = ""; 
     
     if (filtered.length > 0) {
         appendRows(filtered.slice(-MAX_ROWS));
@@ -221,7 +204,6 @@ function applyFilter() {
     updateUI();
 }
 
-// ── RESET FILTER ──────────────────────────────
 function resetFilter() {
     document.getElementById("filterProtocol").value = "ALL";
     document.getElementById("filterSrcIP").value    = "";
@@ -238,7 +220,6 @@ function resetFilter() {
     updateUI();
 }
 
-// ── APPEND ROWS ───────────────────────────────
 function appendRows(newPackets) {
     const tbody = document.getElementById("packetTableBody");
     const empty = tbody.querySelector(".empty-row");
@@ -272,10 +253,8 @@ function appendRows(newPackets) {
     }
 }
 
-// ── EXPORT CSV ────────────────────────────────
 function exportCSV() { window.location.href = "/export"; }
 
-// ── SAVE CAPTURE ──────────────────────────────
 function saveCapture() {
     if (allPackets.length === 0) {
         alert("No packets to save yet.");
@@ -297,7 +276,6 @@ function saveCapture() {
         });
 }
 
-// ── REFRESH SAVES LIST ────────────────────────
 function refreshSavesList() {
     fetch("/saves")
         .then(r => r.json())
@@ -320,7 +298,6 @@ function refreshSavesList() {
         });
 }
 
-// ── LOAD CAPTURE ──────────────────────────────
 function loadCapture(filename) {
     fetch("/load/" + filename)
         .then(r => r.json())
@@ -349,7 +326,6 @@ function loadCapture(filename) {
         });
 }
 
-// ── KEYBOARD SHORTCUTS ────────────────────────
 document.addEventListener("keydown", e => {
     if (e.ctrlKey && e.key === "Enter" &&
         !document.getElementById("btnStart").disabled) startMonitoring();
