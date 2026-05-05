@@ -5,184 +5,173 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PacketSweep — Network Monitor</title>
   <link rel="stylesheet" href="/static/style.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
-  <!-- TOP BAR -->
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="logo">
-        <span class="logo-box">PS</span>
-        <span class="logo-name">PacketSweep</span>
-        <span class="logo-sub">Network Traffic Monitor</span>
+  <!-- TOP NAVIGATION -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="logo-mark">PS</div>
+      <div>
+        <div class="brand-name">PacketSweep</div>
+        <div class="brand-sub">Traffic Analysis Engine</div>
       </div>
     </div>
-    <div class="topbar-right">
-      <div class="counter-group">
-        <div class="counter">
-          <span class="counter-label">CAPTURED</span>
-          <span class="counter-val" id="hCaptured">0</span>
-        </div>
-        <div class="counter-divider"></div>
-        <div class="counter">
-          <span class="counter-label">DISPLAYED</span>
-          <span class="counter-val" id="hDisplayed">0</span>
-        </div>
-        <div class="counter-divider"></div>
-        <div class="counter">
-          <span class="counter-label">BYTES</span>
-          <span class="counter-val" id="hBytes">0</span>
-        </div>
-      </div>
-      <div class="status-badge" id="statusBadge">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusText">IDLE</span>
+
+    <div class="nav-center">
+      <div class="status-pill" id="statusBadge">
+        <span class="pulse-dot" id="statusDot"></span>
+        <span id="statusText" class="status-text">IDLE</span>
       </div>
     </div>
-  </header>
 
-  <div class="layout">
+    <div class="nav-actions">
+      <div class="mini-metrics">
+        <div class="metric"><span class="lbl">CAP</span><span class="val" id="hCaptured">0</span></div>
+        <div class="metric"><span class="lbl">VIS</span><span class="val" id="hDisplayed">0</span></div>
+        <div class="metric"><span class="lbl">VOL</span><span class="val" id="hBytes">0 B</span></div>
+      </div>
+      <button class="btn btn-primary" id="btnStart" onclick="startMonitoring()">Start Capture</button>
+      <button class="btn btn-danger" id="btnStop" onclick="stopMonitoring()" disabled>Stop</button>
+      <button class="btn btn-outline" onclick="exportCSV()">Export</button>
+    </div>
+  </nav>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-      <!-- Controls -->
-      <div class="sidebar-section">
-        <div class="section-label">Controls</div>
-        <button class="btn btn-start" id="btnStart" onclick="startMonitoring()">▶ Start</button>
-        <button class="btn btn-stop"  id="btnStop"  onclick="stopMonitoring()" disabled>■ Stop</button>
-        <button class="btn btn-plain" onclick="exportCSV()">↓ Export CSV</button>
+  <!-- MAIN WORKSPACE -->
+  <main class="workspace">
+    
+    <!-- METRICS GRID -->
+    <section class="metrics-grid">
+      
+      <!-- Traffic Summary Card -->
+      <div class="metric-card">
+        <h3 class="card-title">Traffic Summary</h3>
+        <div class="stat-row">
+          <span class="stat-label">Total Packets</span>
+          <span class="stat-val highlight" id="statTotal">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Total Volume</span>
+          <span class="stat-val" id="statBytes">0 B</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Average Size</span>
+          <span class="stat-val" id="statAvgSize">0 B</span>
+        </div>
       </div>
 
-      <!-- Filters -->
-      <div class="sidebar-section">
-        <div class="section-label">Filters</div>
-        <label class="field-label">Protocol</label>
-        <select class="field-input" id="filterProtocol">
+      <!-- Protocols Card -->
+      <div class="metric-card">
+        <h3 class="card-title">Protocol Distribution</h3>
+        <div class="proto-bars">
+          <div class="proto-row">
+            <span class="p-lbl tcp">TCP</span>
+            <div class="track"><div class="fill f-tcp" id="barTCP"></div></div>
+            <span class="p-val" id="statTCP">0</span>
+          </div>
+          <div class="proto-row">
+            <span class="p-lbl udp">UDP</span>
+            <div class="track"><div class="fill f-udp" id="barUDP"></div></div>
+            <span class="p-val" id="statUDP">0</span>
+          </div>
+          <div class="proto-row">
+            <span class="p-lbl icmp">ICMP</span>
+            <div class="track"><div class="fill f-icmp" id="barICMP"></div></div>
+            <span class="p-val" id="statICMP">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Talkers Card -->
+      <div class="metric-card">
+        <h3 class="card-title">Network Activity</h3>
+        <div class="stat-row">
+          <span class="stat-label">Top Source</span>
+          <span class="stat-val mono" id="statTopSrc">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Top Target</span>
+          <span class="stat-val mono" id="statTopDst">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Top Service</span>
+          <span class="stat-val" id="statTopSvc">—</span>
+        </div>
+      </div>
+
+      <!-- Capture Manager Card -->
+      <div class="metric-card capture-card">
+        <div class="card-header-flex">
+          <h3 class="card-title">Saved Captures</h3>
+          <div class="card-actions">
+            <button class="icon-btn" onclick="saveCapture()" title="Save Current">💾</button>
+            <button class="icon-btn" onclick="refreshSavesList()" title="Refresh">↻</button>
+          </div>
+        </div>
+        <div class="saves-container" id="savesList">
+          <!-- Populated by JS -->
+          <div class="saves-empty">No saves found.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- HORIZONTAL FILTER BAR -->
+    <section class="filter-bar">
+      <div class="filter-group">
+        <label>Protocol</label>
+        <select id="filterProtocol" class="input-flat">
           <option value="ALL">All Protocols</option>
           <option value="TCP">TCP</option>
           <option value="UDP">UDP</option>
           <option value="ICMP">ICMP</option>
         </select>
-        <label class="field-label">Source IP</label>
-        <input class="field-input" type="text" id="filterSrcIP" placeholder="e.g. 192.168.1.5"/>
-        <label class="field-label">Destination IP</label>
-        <input class="field-input" type="text" id="filterDstIP" placeholder="e.g. 8.8.8.8"/>
-        <div class="btn-row">
-          <button class="btn btn-apply" onclick="applyFilter()">Apply</button>
-          <button class="btn btn-plain" onclick="resetFilter()">Reset</button>
-        </div>
       </div>
-
-      <!-- Statistics -->
-      <div class="sidebar-section">
-        <div class="section-label">Statistics</div>
-
-        <div class="stat-line">
-          <span class="stat-key">Total Packets</span>
-          <span class="stat-val" id="statTotal">0</span>
-        </div>
-
-        <div class="proto-bars">
-          <div class="proto-bar-row">
-            <span class="proto-label tcp">TCP</span>
-            <div class="bar-track"><div class="bar-fill tcp-fill" id="barTCP"></div></div>
-            <span class="proto-count" id="statTCP">0</span>
-          </div>
-          <div class="proto-bar-row">
-            <span class="proto-label udp">UDP</span>
-            <div class="bar-track"><div class="bar-fill udp-fill" id="barUDP"></div></div>
-            <span class="proto-count" id="statUDP">0</span>
-          </div>
-          <div class="proto-bar-row">
-            <span class="proto-label icmp">ICMP</span>
-            <div class="bar-track"><div class="bar-fill icmp-fill" id="barICMP"></div></div>
-            <span class="proto-count" id="statICMP">0</span>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="stat-line">
-          <span class="stat-key">Avg Size</span>
-          <span class="stat-val" id="statAvgSize">0 B</span>
-        </div>
-        <div class="stat-line">
-          <span class="stat-key">Total Bytes</span>
-          <span class="stat-val" id="statBytes">0</span>
-        </div>
-        <div class="stat-line">
-          <span class="stat-key">Top Source</span>
-          <span class="stat-val small" id="statTopSrc">—</span>
-        </div>
-        <div class="stat-line">
-          <span class="stat-key">Top Dest</span>
-          <span class="stat-val small" id="statTopDst">—</span>
-        </div>
-        <div class="stat-line">
-          <span class="stat-key">Top Service</span>
-          <span class="stat-val" id="statTopSvc">—</span>
-        </div>
+      <div class="filter-group">
+        <label>Source IP</label>
+        <input type="text" id="filterSrcIP" class="input-flat" placeholder="e.g. 192.168.1.5" />
       </div>
-
-      <!-- Capture Files -->
-      <div class="sidebar-section" style="flex:1; display:flex; flex-direction:column;">
-        <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
-          Capture Files
-          <div style="display:flex; gap:6px;">
-            <button class="btn-small" onclick="saveCapture()">Save</button>
-            <button class="btn-small" onclick="refreshSavesList()">↺</button>
-          </div>
-        </div>
-        <div class="saves-list" id="savesList">
-          <div class="saves-empty">No saved captures yet.</div>
-        </div>
+      <div class="filter-group">
+        <label>Destination IP</label>
+        <input type="text" id="filterDstIP" class="input-flat" placeholder="e.g. 8.8.8.8" />
       </div>
-
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main">
-
-      <!-- Packet Table -->
-      <div class="card table-card">
-        <div class="card-header">
-          <span class="card-title">Packet Capture</span>
-          <span class="card-count" id="packetCount">0 packets</span>
-        </div>
-        <div class="table-wrap">
-          <table class="packet-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Time</th>
-                <th>Source IP</th>
-                <th>Destination IP</th>
-                <th>Protocol</th>
-                <th>Src Port</th>
-                <th>Dst Port</th>
-                <th>Service</th>
-                <th>Size</th>
-                <th>Flags</th>
-              </tr>
-            </thead>
-            <tbody id="packetTableBody">
-              <tr class="empty-row">
-                <td colspan="10">
-                  <div class="empty-state">
-                    <div class="empty-icon">[ ]</div>
-                    <div>Press Start to begin monitoring</div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="filter-actions">
+        <button class="btn btn-secondary" onclick="applyFilter()">Apply Filters</button>
+        <button class="btn btn-text" onclick="resetFilter()">Clear</button>
       </div>
+    </section>
 
-    </main>
-  </div>
+    <!-- DATA TABLE -->
+    <section class="table-container">
+      <div class="table-header">
+        <h2>Packet Stream</h2>
+        <span class="table-meta" id="packetCount">0 packets</span>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Timestamp</th>
+              <th>Source IP</th>
+              <th>Destination IP</th>
+              <th>Protocol</th>
+              <th>Src Port</th>
+              <th>Dst Port</th>
+              <th>Service</th>
+              <th>Size</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody id="packetTableBody">
+            <!-- Handled by JS Empty State Manager -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
 
   <script src="/static/script.js"></script>
 </body>
